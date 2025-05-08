@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two Marras - Trading Card Game Stock Alerts</title>
+    <meta name="description" content="Two Marras - Helping TCG fans get Pokemon cards before scalpers. Follow us for real-time stock alerts." />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hurricane&display=swap" rel="stylesheet">
+    <style>
+      .blurred-bg {
+        position: absolute;
+        top: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 900px;
+        height: 400px;
+        background: radial-gradient(circle at 60% 40%, #ff8800 0%, #ff6600 20%, transparent 100%);
+        filter: blur(80px);
+        opacity: 0.2;
+        z-index: 0;
+      }
+      .signature {
+        font-family: 'Hurricane', cursive;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-950 text-white min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+    <div class="blurred-bg"></div>
+    <header class="mt-20">
+        <div class="mx-auto max-w-6xl px-6  lg:px-8 w-full">
+            <h2 class="text-center text-base/7 font-semibold text-orange-400">Born in the North</h2>
+            <p class="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-gray-100 sm:text-5xl">Two Marras</p>
+            <p class="text-lg text-gray-500 max-w-2xl mb-6 text-center mt-2" >
+                Fighting for Pokemon TCG fans everywhere. We're your mates in the battle against scalpers.
+              </p>
+        </div>
+    </header>
+
+    <div class="py-24">
+        <div class="mx-auto max-w-6xl px-6  lg:px-8 w-full">
+          <h2 class="text-center text-base/7 font-semibold text-orange-400">About Us</h2>
+          <p class="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-gray-100 sm:text-5xl">Our Ethos</p>
+
+          <div class="bg-gray-900/40 p-8 rounded-lg mt-8 w-full text-left border border-gray-800 text-gray-400 font-medium">
+            <p>
+                Two Marras was founded by two lifelong mates from the North East of England who were fed up with the state of the collectible games market. Like many fans, they struggled to find stock of their favourite trading cards and gaming products - constantly beaten to the punch by bots, resellers, and scalpers. What began as frustration turned into action: they created a platform with one clear goal - make collectibles accessible again.
+            </p>
+
+            <p class="my-4">
+                At its core, Two Marras is an affiliate-based company built on fairness, transparency, and a deep love for the hobby. We monitor stock across multiple platforms so collectors don't have to. Our mission is simple: help real fans get the products they want, without the stress, the FOMO, or the exploitative pricing.  We're not here to play the scalpers' game... we're here to beat it.
+            </p>
+            
+            <p>
+                Community is everything to us. We don't just serve collectors... we are collectors. That's why we're committed to putting people before profit, sharing real-time restock updates, and championing ethical access. No bots. No gatekeeping. Just two marras doing right by the community.
+            </p>
+
+            <div class="mt-4 flex gap-8 flex-wrap">
+                <p class="signature text-gray-600 text-4xl">
+                    Michael
+                </p>
+                <p class="signature text-gray-600 text-4xl">
+                    Liam
+                </p>
+            </div>
+
+          </div>
+
+        </div>
+    </div>
+      
+    <footer class="relative z-10 w-full max-w-6xl mx-auto px-6 py-8 text-center text-gray-600 text-sm mt-auto">
+      &copy; 2024 Two Marras. Not affiliated with Nintendo, Game Freak, or The Pokemon Company.
+    </footer>
+  </body>
+</html> 
