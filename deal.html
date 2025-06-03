@@ -1,91 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Two Marras - Making Collectibles Accessible</title>
-    <meta name="description" content="Two Marras - Helping TCG fans get Pokemon cards before scalpers. Follow us for real-time stock alerts." />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Hurricane&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting or Link Generator</title>
     <style>
-        .blurred-bg {
-            position: absolute;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 900px;
-            height: 400px;
-            background: radial-gradient(circle at 60% 40%, #ff8800 0%, #ff6600 20%, transparent 100%);
-            filter: blur(80px);
-            opacity: 0.2;
-            z-index: 0;
+        /* Dark Mode Styles */
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            background-color: #1a1a1a; /* Dark background */
+            color: #e0e0e0; /* Light text */
+            margin: 0;
+            padding: 20px;
         }
-        .signature {
-            font-family: 'Hurricane', cursive;
+        .container {
+            background-color: #2c2c2c; /* Slightly lighter dark for contrast */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Stronger shadow for dark mode */
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid #444; /* Subtle border */
+        }
+        .redirecting-message {
+            font-size: 1.2em;
+            color: #00b0f0; /* Accent color */
+        }
+        .form-container {
+            text-align: left;
+        }
+        .form-container h2 {
+            margin-top: 0;
+            color: #ffffff; /* White heading */
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #ccc; /* Slightly lighter label text */
+        }
+        input[type="text"] {
+            width: calc(100% - 22px); /* Account for padding and border */
+            padding: 10px;
+            border: 1px solid #555; /* Darker border */
+            border-radius: 4px;
+            font-size: 1em;
+            background-color: #3a3a3a; /* Dark input background */
+            color: #e0e0e0; /* Light input text */
+        }
+        input[type="text"]::placeholder {
+            color: #bbb; /* Lighter placeholder text */
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #generatedUrlOutput {
+            margin-top: 20px;
+            padding: 15px; /* More padding */
+            background-color: #3a3a3a; /* Darker output background */
+            border: 1px dashed #666; /* Darker dashed border */
+            border-radius: 4px;
+            word-break: break-all; /* Break long URLs */
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #00ff00; /* Green text for the link */
+            display: none; /* Initially hidden */
+            overflow-x: auto; /* Add horizontal scroll for very long URLs */
+            text-align: left; /* Align text left */
         }
     </style>
-</head>
-<body class="bg-gray-950 text-white flex flex-col items-center justify-center relative">
-<div class="blurred-bg"></div>
-<header class="mt-20">
-    <div class="mx-auto max-w-2xl px-6  lg:px-8 w-full">
-        <h2 class="text-center text-base/7 font-semibold text-orange-400">Please Wait</h2>
-        <p class="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-gray-100 sm:text-5xl">Taking you to your deal...</p>
-    </div>
-</header>
 
-<script>
-    function redirectToUrlParam(allowedOrigins = [window.location.origin]) { // Now accepts an array
-        const queryString = window.location.search;
-        if (!queryString) { console.log("No query string found."); return; }
-        const params = new URLSearchParams(queryString);
-        const redirectUrl = params.get('url');
+    <script>
+        /**
+         * Handles Base64 encoding a string.
+         * @param {string} str - The string to encode.
+         * @returns {string} The Base64 encoded string.
+         */
+        function base64Encode(str) {
+            // Use btoa, which works on strings where each character is treated as a byte (ASCII compatible)
+            // For broader Unicode support, you might need TextEncoder/TextDecoder
+            return btoa(unescape(encodeURIComponent(str))); // Handle non-ASCII characters
+        }
 
-        if (redirectUrl) {
-            console.log(`Found 'url' parameter: ${redirectUrl}`);
+        /**
+         * Handles Base64 decoding a string.
+         * @param {string} encodedStr - The Base64 string to decode.
+         * @returns {string|null} The decoded string, or null if decoding fails.
+         */
+        function base64Decode(encodedStr) {
+            try {
+                // Use atob
+                return decodeURIComponent(escape(atob(encodedStr))); // Handle non-ASCII characters
+            } catch (e) {
+                console.error("Base64 decoding failed:", e);
+                return null;
+            }
+        }
 
-            let isUrlAllowed = false; // Start assuming not allowed
-            if (allowedOrigins && allowedOrigins.length > 0) {
-                try {
-                    const parsedRedirectUrl = new URL(redirectUrl, window.location.href);
 
-                    // Check if the parsed URL's origin is in the list of allowed origins
-                    if (allowedOrigins.includes(parsedRedirectUrl.origin)) {
-                        isUrlAllowed = true;
-                    } else {
-                        console.warn(`Redirect blocked: URL origin "${parsedRedirectUrl.origin}" is not in the allowed list.`);
+        /**
+         * Checks the current page's URL for a Base64 encoded 'url' query parameter,
+         * decodes it, validates its origin against a list of allowed origins,
+         * and redirects the user if valid.
+         * If no valid 'url' parameter is found, it shows the link generation form.
+         *
+         * @param {string[]|string|null} [allowedOrigins=[window.location.origin]] - A single origin string,
+         *   an array of origin strings, or null. Redirects are only allowed to origins
+         *   matching the current page's origin by default (recommended for GitHub Pages).
+         *   Set to null or an empty array to allow any URL (use with extreme caution -
+         *   opens to redirect vulnerability).
+         */
+        function handleRedirectOrShowForm(allowedOrigins = [window.location.origin]) {
+            const queryString = window.location.search;
+            const redirectingMessage = document.getElementById('redirectingMessage');
+            const formContainer = document.getElementById('formContainer');
+
+            // Always start by hiding the form and showing the message container
+            if (formContainer) formContainer.style.display = 'none';
+            if (redirectingMessage) redirectingMessage.style.display = 'block';
+
+            if (!queryString) {
+                console.log("No query string found. Showing form.");
+                // No query parameters, show the form, hide the message
+                if (redirectingMessage) redirectingMessage.style.display = 'none';
+                if (formContainer) formContainer.style.display = 'block';
+                return; // Stop processing
+            }
+
+            const params = new URLSearchParams(queryString);
+            const encodedRedirectUrl = params.get('url'); // Get the Base64 encoded value
+
+            if (encodedRedirectUrl) {
+                // Found the 'url' parameter, update message immediately
+                if (redirectingMessage) redirectingMessage.textContent = 'Redirecting...';
+                console.log(`Found encoded 'url' parameter: ${encodedRedirectUrl}`);
+
+                let redirectUrl = base64Decode(encodedRedirectUrl);
+
+                if (redirectUrl === null) {
+                    // Decoding failed
+                    if (redirectingMessage) redirectingMessage.textContent = 'Error: Invalid encoded URL provided.';
+                    console.log("Base64 decoding failed. Showing form.");
+                    // Wait a moment before showing the form so the user sees the error message briefly
+                    setTimeout(() => {
+                        if (redirectingMessage) redirectingMessage.style.display = 'none';
+                        if (formContainer) formContainer.style.display = 'block';
+                    }, 1500); // Show error for 1.5 seconds
+                    return; // Stop processing
+                }
+
+                console.log(`Decoded URL: ${redirectUrl}`);
+
+                // --- SECURITY VALIDATION ---
+                let isUrlAllowed = false; // Assume not allowed by default
+                let allowedOriginList = Array.isArray(allowedOrigins) ? allowedOrigins : (allowedOrigins ? [allowedOrigins] : []);
+
+                if (allowedOrigins === null || allowedOriginList.length === 0) {
+                    // This block is triggered ONLY if you explicitly call with null or []
+                    // which is NOT recommended for security.
+                    console.warn("Security risk: No allowed origin specified, redirecting to potentially external URL.");
+                    isUrlAllowed = true; // Allowing any URL if no restriction is set (DANGEROUS)
+                } else {
+                    try {
+                        // Use the decoded URL for validation
+                        const parsedRedirectUrl = new URL(redirectUrl, window.location.href); // Base URL helps parse relative paths
+
+                        // Check if the origin of the target URL is in the list of allowed origins
+                        if (allowedOriginList.includes(parsedRedirectUrl.origin)) {
+                            isUrlAllowed = true;
+                            console.log(`Allowed redirect origin: ${parsedRedirectUrl.origin}`);
+                        } else {
+                            console.warn(`Redirect blocked: URL origin "${parsedRedirectUrl.origin}" is not in the allowed list: [${allowedOriginList.join(', ')}].`);
+                        }
+                    } catch (e) {
+                        // Handle cases where decoded redirectUrl is not a valid URL format after decoding
+                        console.error(`Redirect blocked: Decoded URL "${redirectUrl}" is not a valid URL format.`, e);
+                        // This is also a validation failure, treat it as such
                     }
-                } catch (e) {
-                    console.error(`Redirect blocked: Invalid URL format "${redirectUrl}".`, e);
+                }
+                // --- END SECURITY VALIDATION ---
+
+
+                if (isUrlAllowed) {
+                    // If validation passes, perform the redirect using the decoded URL
+                    // The message "Redirecting..." is already set above
+                    // Use replace to prevent the user from hitting the back button to this page
+                    window.location.replace(redirectUrl);
+                    // The console log below might not execute if redirect happens quickly
+                    console.log(`Attempting redirect to: ${redirectUrl}`);
+                } else {
+                    // If redirect is blocked by security check or invalid URL format
+                    if (redirectingMessage) redirectingMessage.textContent = 'Error: Redirect blocked for security reasons or invalid URL.';
+                    console.log("Redirect blocked by security policy or invalid URL format. Showing form.");
+                    // Wait a moment before showing the form
+                    setTimeout(() => {
+                        if (redirectingMessage) redirectingMessage.style.display = 'none';
+                        if (formContainer) formContainer.style.display = 'block';
+                    }, 1500); // Show error for 1.5 seconds
+                }
+
+
+            } else {
+                // 'url' parameter exists but is empty, or some other parameter is present but not 'url'
+                console.log("'url' parameter is missing or empty. Showing form.");
+                if (redirectingMessage) redirectingMessage.style.display = 'none';
+                if (formContainer) formContainer.style.display = 'block';
+            }
+        }
+
+        /**
+         * Handles the form submission/button click to generate the Base64 encoded URL.
+         */
+        function generateEncodedUrl() {
+            const inputElement = document.getElementById('skimlinksUrlInput');
+            const outputElement = document.getElementById('generatedUrlOutput');
+            const urlToEncode = inputElement.value.trim();
+
+            outputElement.style.display = 'none'; // Hide previous output
+
+            if (!urlToEncode) {
+                alert("Please enter a URL to encode.");
+                return;
+            }
+
+            try {
+                // Base64 encode the input URL using the helper
+                const encodedUrl = base64Encode(urlToEncode);
+
+                // Get the current page's base URL (protocol, domain, path)
+                // Ensure we only take the path part up to the filename, removing any existing query/hash
+                const baseUrl = window.location.origin + window.location.pathname.split('?')[0].split('#')[0];
+
+                // Construct the full generated URL
+                const generatedUrl = `${baseUrl}?url=${encodedUrl}`;
+
+                // Display the generated URL
+                outputElement.textContent = generatedUrl;
+                outputElement.style.display = 'block';
+
+            } catch (e) {
+                console.error("Failed to generate encoded URL:", e);
+                outputElement.textContent = "Error generating URL. Please check your input.";
+                outputElement.style.display = 'block';
+            }
+        }
+
+        // --- Initialisation ---
+        // Wait for the DOM to be fully loaded before trying to access elements
+        document.addEventListener('DOMContentLoaded', () => {
+            // Find the button and attach the click event listener
+            const generateButton = document.getElementById('generateButton');
+            if (generateButton) {
+                // Use a click listener on the button
+                generateButton.addEventListener('click', generateEncodedUrl);
+
+                // Optional: Allow pressing Enter in the input field to generate
+                const inputElement = document.getElementById('skimlinksUrlInput');
+                if (inputElement) {
+                    inputElement.addEventListener('keypress', function(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault(); // Prevent form submission/page reload if inside a form
+                            generateEncodedUrl();
+                        }
+                    });
                 }
             } else {
-                // Warning if no allowedOrigins are set - allowing any URL
-                console.warn("Security risk: No allowed origins specified, redirecting to potentially external URL.");
-                isUrlAllowed = true; // If no restrictions, allow
+                console.error("Generate button not found!");
             }
 
-            if (isUrlAllowed) {
-                window.location.replace(redirectUrl);
-                console.log(`Redirecting to: ${redirectUrl}`);
-            }
-        } else {
-            console.log("No 'url' parameter found in the query string.");
-        }
-    }
+            // Run the main logic to either redirect or show the form
+            // Provide the list of allowed origins as an ARRAY
+            handleRedirectOrShowForm([
+                window.location.origin, // Always allow redirecting to the current site itself (e.g. https://your-username.github.io)
+                'https://go.skimresources.com',
+                'https://skinresources.com', // Make sure this is a real origin if needed
+                'https://www.twomarras.com', // Add your custom domain origin if applicable
+                'https://twomarras.com', // Also include the non-www version if used
+                // Add any other SPECIFIC origins you trust here.
+                // e.g. 'https://www.google.com' IF you must allow redirecting to google
+            ]);
 
-    // Example usage allowing your test domain AND google.com:
-    redirectToUrlParam([
-        'https://www.two-marras.com',
-        'https://go.skimresources.com',
-        'https://skinresources.com',
-        'https://google.com'
-    ]);
-</script>
+            // If you only want to allow redirects to your current GitHub Pages site (most secure):
+            // handleRedirectOrShowForm(); // uses window.location.origin by default
 
-<footer class="relative z-10 w-full max-w-6xl mx-auto px-6 py-8 text-center text-gray-600 text-sm mt-auto">
-    &copy; 2025 Two Marras Ltd. Company No. 16399077
-</footer>
+            // If you dangerously MUST allow ANY URL (NOT recommended):
+            // handleRedirectOrShowForm(null);
+
+        });
+
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <!-- Message shown briefly while checking/redirecting -->
+    <!-- Initial content set by JS based on whether ?url exists -->
+    <div id="redirectingMessage" class="redirecting-message"></div>
+
+    <!-- Form Container - Hidden by default, shown if no ?url param or redirect fails -->
+    <div id="formContainer" class="form-container"> <!-- Display will be set by JS -->
+        <h2>Generate Encoded Redirect Link</h2>
+        <div class="form-group">
+            <label for="skimlinksUrlInput">Enter Target URL:</label>
+            <input type="text" id="skimlinksUrlInput" placeholder="e.g., https://go.skimresources.com/...">
+        </div>
+        <button id="generateButton">Generate Encoded Link</button>
+
+        <div id="generatedUrlOutput">
+            <!-- Generated URL will appear here -->
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
