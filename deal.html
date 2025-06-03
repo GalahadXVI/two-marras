@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting or Link Generator</title>
+    <title id="pageTitle">Redirecting or Link Generator</title>
+    <!-- Optional: Add a placeholder og:image meta tag, might not be seen by crawlers -->
+    <meta property="og:image" id="ogImageMeta" content="">
+
     <style>
         /* Dark Mode Styles */
         body {
@@ -53,7 +56,7 @@
             width: calc(100% - 22px); /* Account for padding and border */
             padding: 10px;
             border: 1px solid #555; /* Darker border */
-            border-radius: 4px;
+            border-radius: 4 awfullypx;
             font-size: 1em;
             background-color: #3a3a3a; /* Dark input background */
             color: #e0e0e0; /* Light input text */
@@ -91,6 +94,12 @@
             overflow-x: auto; /* Add horizontal scroll for very long URLs */
             text-align: left; /* Align text left */
         }
+        .explanation {
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #aaa;
+            text-align: center;
+        }
     </style>
 
     <script>
@@ -100,61 +109,93 @@
          * @returns {string} The Base64 encoded string.
          */
         function base64Encode(str) {
+            if (!str) return ''; // Handle empty strings
             // Use btoa, which works on strings where each character is treated as a byte (ASCII compatible)
-            // For broader Unicode support, you might need TextEncoder/TextDecoder
-            return btoa(unescape(encodeURIComponent(str))); // Handle non-ASCII characters
+            // For broader Unicode support, use TextEncoder/TextDecoder or the escape/unescape trick
+            // The escape/unescape trick: encodeURIComponent for UTF-8, then escape for % encoding, then atob
+            try {
+                return btoa(unescape(encodeURIComponent(str)));
+            } catch(e) {
+                console.error("Base64 Encoding failed:", e, str);
+                return ''; // Return empty on failure
+            }
         }
 
         /**
          * Handles Base64 decoding a string.
          * @param {string} encodedStr - The Base64 string to decode.
-         * @returns {string|null} The decoded string, or null if decoding fails.
+         * @returns {string|null} The decoded string, or null if decoding fails or input is empty.
          */
         function base64Decode(encodedStr) {
+            if (!encodedStr) return null; // Handle empty strings
+
             try {
-                // Use atob
-                return decodeURIComponent(escape(atob(encodedStr))); // Handle non-ASCII characters
+                // The escape/unescape trick inverse
+                return decodeURIComponent(escape(atob(encodedStr)));
             } catch (e) {
-                console.error("Base64 decoding failed:", e);
-                return null;
+                console.error("Base64 decoding failed:", e, encodedStr);
+                return null; // Return null on failure
             }
         }
 
 
         /**
-         * Checks the current page's URL for a Base64 encoded 'url' query parameter,
-         * decodes it, validates its origin against a list of allowed origins,
-         * and redirects the user if valid.
-         * If no valid 'url' parameter is found, it shows the link generation form.
+         * Checks the current page's URL for encoded parameters, redirects if a valid URL is found,
+         * or shows the link generation form otherwise.
+         * Also attempts to update page title and og:image based on decoded parameters.
          *
-         * @param {string[]|string|null} [allowedOrigins=[window.location.origin]] - A single origin string,
-         *   an array of origin strings, or null. Redirects are only allowed to origins
-         *   matching the current page's origin by default (recommended for GitHub Pages).
-         *   Set to null or an empty array to allow any URL (use with extreme caution -
-         *   opens to redirect vulnerability).
+         * @param {string[]|string|null} [allowedOrigins=[window.location.origin]] - A list of allowed origins.
+         *   Defaults to the current page's origin array.
          */
         function handleRedirectOrShowForm(allowedOrigins = [window.location.origin]) {
             const queryString = window.location.search;
             const redirectingMessage = document.getElementById('redirectingMessage');
             const formContainer = document.getElementById('formContainer');
+            const pageTitleElement = document.getElementById('pageTitle');
+            const ogImageMetaElement = document.getElementById('ogImageMeta');
+
 
             // Always start by hiding the form and showing the message container
             if (formContainer) formContainer.style.display = 'none';
-            if (redirectingMessage) redirectingMessage.style.display = 'block';
+            if (redirectingMessage) {
+                redirectingMessage.style.display = 'block';
+                redirectingMessage.textContent = 'Checking URL...'; // Initial message
+            }
+
 
             if (!queryString) {
                 console.log("No query string found. Showing form.");
                 // No query parameters, show the form, hide the message
                 if (redirectingMessage) redirectingMessage.style.display = 'none';
                 if (formContainer) formContainer.style.display = 'block';
+
+                // Reset title/image if form is shown
+                if (pageTitleElement) pageTitleElement.textContent = 'Redirecting or Link Generator';
+                if (ogImageMetaElement) ogImageMetaElement.setAttribute('content', '');
+
                 return; // Stop processing
             }
 
             const params = new URLSearchParams(queryString);
             const encodedRedirectUrl = params.get('url'); // Get the Base64 encoded value
+            const encodedTitle = params.get('title_b64'); // Get encoded title
+            const encodedImageUrl = params.get('image_url_b64'); // Get encoded image URL
+
+            // Decode optional parameters immediately
+            const decodedTitle = base64Decode(encodedTitle);
+            const decodedImageUrl = base64Decode(encodedImageUrl);
+
+            // Update page title and meta tag if decoded data is available
+            if (pageTitleElement && decodedTitle) {
+                pageTitleElement.textContent = decodedTitle;
+            }
+            if (ogImageMetaElement && decodedImageUrl) {
+                ogImageMetaElement.setAttribute('content', decodedImageUrl);
+            }
+
 
             if (encodedRedirectUrl) {
-                // Found the 'url' parameter, update message immediately
+                // Found the 'url' parameter, update message
                 if (redirectingMessage) redirectingMessage.textContent = 'Redirecting...';
                 console.log(`Found encoded 'url' parameter: ${encodedRedirectUrl}`);
 
@@ -228,34 +269,56 @@
                 console.log("'url' parameter is missing or empty. Showing form.");
                 if (redirectingMessage) redirectingMessage.style.display = 'none';
                 if (formContainer) formContainer.style.display = 'block';
+
+                // Reset title/image if form is shown because 'url' is missing
+                if (pageTitleElement) pageTitleElement.textContent = 'Redirecting or Link Generator';
+                if (ogImageMetaElement) ogImageMetaElement.setAttribute('content', '');
             }
         }
 
         /**
-         * Handles the form submission/button click to generate the Base64 encoded URL.
+         * Handles the form submission/button click to generate the Base64 encoded URL
+         * including optional title and image parameters.
          */
         function generateEncodedUrl() {
-            const inputElement = document.getElementById('skimlinksUrlInput');
+            const urlInput = document.getElementById('skimlinksUrlInput');
+            const titleInput = document.getElementById('titleInput'); // New input
+            const imageUrlInput = document.getElementById('imageUrlInput'); // New input
             const outputElement = document.getElementById('generatedUrlOutput');
-            const urlToEncode = inputElement.value.trim();
+
+            const urlToEncode = urlInput.value.trim();
+            const titleValue = titleInput.value.trim(); // Get title value
+            const imageUrlValue = imageUrlInput.value.trim(); // Get image URL value
 
             outputElement.style.display = 'none'; // Hide previous output
 
             if (!urlToEncode) {
-                alert("Please enter a URL to encode.");
+                alert("Please enter the Target URL.");
                 return;
             }
 
             try {
-                // Base64 encode the input URL using the helper
+                // Base64 encode the target URL (required)
                 const encodedUrl = base64Encode(urlToEncode);
+
+                // Base64 encode optional title and image URL (if provided)
+                const encodedTitle = base64Encode(titleValue);
+                const encodedImageUrl = base64Encode(imageUrlValue);
 
                 // Get the current page's base URL (protocol, domain, path)
                 // Ensure we only take the path part up to the filename, removing any existing query/hash
                 const baseUrl = window.location.origin + window.location.pathname.split('?')[0].split('#')[0];
 
                 // Construct the full generated URL
-                const generatedUrl = `${baseUrl}?url=${encodedUrl}`;
+                let generatedUrl = `${baseUrl}?url=${encodedUrl}`;
+
+                // Append encoded title and image URL if they exist
+                if (encodedTitle) {
+                    generatedUrl += `&title_b64=${encodedTitle}`;
+                }
+                if (encodedImageUrl) {
+                    generatedUrl += `&image_url_b64=${encodedImageUrl}`;
+                }
 
                 // Display the generated URL
                 outputElement.textContent = generatedUrl;
@@ -263,7 +326,7 @@
 
             } catch (e) {
                 console.error("Failed to generate encoded URL:", e);
-                outputElement.textContent = "Error generating URL. Please check your input.";
+                outputElement.textContent = "Error generating URL. Please check your input values.";
                 outputElement.style.display = 'block';
             }
         }
@@ -277,14 +340,16 @@
                 // Use a click listener on the button
                 generateButton.addEventListener('click', generateEncodedUrl);
 
-                // Optional: Allow pressing Enter in the input field to generate
-                const inputElement = document.getElementById('skimlinksUrlInput');
-                if (inputElement) {
-                    inputElement.addEventListener('keypress', function(event) {
-                        if (event.key === 'Enter') {
-                            event.preventDefault(); // Prevent form submission/page reload if inside a form
-                            generateEncodedUrl();
-                        }
+                // Optional: Allow pressing Enter in any input field within the form container
+                const formContainer = document.getElementById('formContainer');
+                if (formContainer) {
+                    formContainer.querySelectorAll('input[type="text"]').forEach(input => {
+                        input.addEventListener('keypress', function(event) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault(); // Prevent default Enter behavior (form submission/page reload)
+                                generateEncodedUrl(); // Trigger generation
+                            }
+                        });
                     });
                 }
             } else {
@@ -299,8 +364,7 @@
                 'https://skinresources.com', // Make sure this is a real origin if needed
                 'https://www.twomarras.com', // Add your custom domain origin if applicable
                 'https://twomarras.com', // Also include the non-www version if used
-                // Add any other SPECIFIC origins you trust here.
-                // e.g. 'https://www.google.com' IF you must allow redirecting to google
+                'https://fave.co',
             ]);
 
             // If you only want to allow redirects to your current GitHub Pages site (most secure):
@@ -316,22 +380,33 @@
 <body>
 
 <div class="container">
-    <!-- Message shown briefly while checking/redirecting -->
-    <!-- Initial content set by JS based on whether ?url exists -->
+    <!-- Message shown based on script execution -->
     <div id="redirectingMessage" class="redirecting-message"></div>
 
     <!-- Form Container - Hidden by default, shown if no ?url param or redirect fails -->
     <div id="formContainer" class="form-container"> <!-- Display will be set by JS -->
         <h2>Generate Encoded Redirect Link</h2>
         <div class="form-group">
-            <label for="skimlinksUrlInput">Enter Target URL:</label>
+            <label for="skimlinksUrlInput">Target URL:</label>
             <input type="text" id="skimlinksUrlInput" placeholder="e.g., https://go.skimresources.com/...">
+        </div>
+        <div class="form-group">
+            <label for="titleInput">Link Title (Optional):</label>
+            <input type="text" id="titleInput" placeholder="e.g., Great Product Deal">
+        </div>
+        <div class="form-group">
+            <label for="imageUrlInput">Link Image URL (Optional):</label>
+            <input type="text" id="imageUrlInput" placeholder="e.g., https://example.com/product-image.jpg">
         </div>
         <button id="generateButton">Generate Encoded Link</button>
 
         <div id="generatedUrlOutput">
             <!-- Generated URL will appear here -->
         </div>
+
+        <p class="explanation">
+            Note: Automatically fetching the title and image from external websites is usually blocked by browser security. Please manually enter them above. Social media previews require server-side processing, which is not possible on GitHub Pages.
+        </p>
     </div>
 </div>
 
