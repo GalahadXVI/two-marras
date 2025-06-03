@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two Marras - Making Collectibles Accessible</title>
+    <meta name="description" content="Two Marras - Helping TCG fans get Pokemon cards before scalpers. Follow us for real-time stock alerts." />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hurricane&display=swap" rel="stylesheet">
+    <style>
+        .blurred-bg {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 400px;
+            background: radial-gradient(circle at 60% 40%, #ff8800 0%, #ff6600 20%, transparent 100%);
+            filter: blur(80px);
+            opacity: 0.2;
+            z-index: 0;
+        }
+        .signature {
+            font-family: 'Hurricane', cursive;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white flex flex-col items-center justify-center relative">
+<div class="blurred-bg"></div>
+<header class="mt-20">
+    <div class="mx-auto max-w-2xl px-6  lg:px-8 w-full">
+        <h2 class="text-center text-base/7 font-semibold text-orange-400">Please Wait</h2>
+        <p class="mx-auto mt-2 max-w-lg text-center text-4xl font-semibold tracking-tight text-balance text-gray-100 sm:text-5xl">Taking you to your deal...</p>
+    </div>
+</header>
+
+<script>
+    function redirectToUrlParam(allowedOrigins = [window.location.origin]) { // Now accepts an array
+        const queryString = window.location.search;
+        if (!queryString) { console.log("No query string found."); return; }
+        const params = new URLSearchParams(queryString);
+        const redirectUrl = params.get('url');
+
+        if (redirectUrl) {
+            console.log(`Found 'url' parameter: ${redirectUrl}`);
+
+            let isUrlAllowed = false; // Start assuming not allowed
+            if (allowedOrigins && allowedOrigins.length > 0) {
+                try {
+                    const parsedRedirectUrl = new URL(redirectUrl, window.location.href);
+
+                    // Check if the parsed URL's origin is in the list of allowed origins
+                    if (allowedOrigins.includes(parsedRedirectUrl.origin)) {
+                        isUrlAllowed = true;
+                    } else {
+                        console.warn(`Redirect blocked: URL origin "${parsedRedirectUrl.origin}" is not in the allowed list.`);
+                    }
+                } catch (e) {
+                    console.error(`Redirect blocked: Invalid URL format "${redirectUrl}".`, e);
+                }
+            } else {
+                // Warning if no allowedOrigins are set - allowing any URL
+                console.warn("Security risk: No allowed origins specified, redirecting to potentially external URL.");
+                isUrlAllowed = true; // If no restrictions, allow
+            }
+
+            if (isUrlAllowed) {
+                window.location.replace(redirectUrl);
+                console.log(`Redirecting to: ${redirectUrl}`);
+            }
+        } else {
+            console.log("No 'url' parameter found in the query string.");
+        }
+    }
+
+    // Example usage allowing your test domain AND google.com:
+    redirectToUrlParam([
+        'https://www.two-marras.com',
+        'https://go.skimresources.com',
+        'https://skinresources.com',
+        'https://google.com'
+    ]);
+</script>
+
+<footer class="relative z-10 w-full max-w-6xl mx-auto px-6 py-8 text-center text-gray-600 text-sm mt-auto">
+    &copy; 2025 Two Marras Ltd. Company No. 16399077
+</footer>
+</body>
+</html>
